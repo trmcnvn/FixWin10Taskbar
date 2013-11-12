@@ -5,9 +5,9 @@
 
 LRESULT CALLBACK MouseProc(int nCode, WPARAM wParam, LPARAM lParam) {
 	if (nCode == HC_ACTION && wParam == WM_LBUTTONUP && lParam) {
-		MOUSEHOOKSTRUCT* msg = reinterpret_cast<MOUSEHOOKSTRUCT*>(lParam);
+		auto msg = reinterpret_cast<MOUSEHOOKSTRUCT*>(lParam);
 
-		HWND hWnd = FindWindowW(L"Shell_SecondaryTrayWnd", NULL);
+		auto hWnd = FindWindowW(L"Shell_SecondaryTrayWnd", NULL);
 		if (msg->hwnd == hWnd) {
 			SetForegroundWindow(FindWindowW(L"Shell_TrayWnd", NULL));
 		}
@@ -31,7 +31,6 @@ DWORD WINAPI dwThread(LPVOID lpParam) {
 
 BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpvReserved) {
 	if (fdwReason == DLL_PROCESS_ATTACH) {
-
 		auto thread = CreateThread(NULL, NULL, dwThread, hInstDLL, NULL, NULL);
 		CloseHandle(thread);
 	}
