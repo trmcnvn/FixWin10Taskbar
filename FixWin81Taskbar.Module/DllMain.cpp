@@ -20,20 +20,27 @@ LRESULT CALLBACK MouseProc(int nCode, WPARAM wParam, LPARAM lParam) {
 LRESULT CALLBACK RedrawProc(int nCode, WPARAM wParam, LPARAM lParam) {
 	if (nCode >= HC_ACTION) {
 		auto msg = reinterpret_cast<CWPSTRUCT*>(lParam);
-		auto hWnd = FindWindowW(L"Shell_SecondaryTrayWnd", NULL);
-		hWnd = FindWindowExW(hWnd, nullptr, L"WorkerW", nullptr);
+		if ((msg->message == WM_WINDOWPOSCHANGING || msg->message == WM_WINDOWPOSCHANGED || msg->message == WM_NCPAINT)) {
+			auto hWnd = FindWindowW(L"Shell_SecondaryTrayWnd", NULL);
+			hWnd = FindWindowExW(hWnd, nullptr, L"WorkerW", nullptr);
 
-		if ((msg->message == WM_WINDOWPOSCHANGING || msg->message == WM_WINDOWPOSCHANGED || msg->message == WM_NCPAINT) && msg->hwnd == hWnd) {
-			RECT rect;
-			GetWindowRect(hWnd, &rect);
-			SetWindowPos(hWnd, nullptr, 0, 0, rect.right, rect.bottom - rect.top, SWP_NOZORDER | SWP_NOACTIVATE);
+			if (msg->hwnd == hWnd) {
+				SetWindowPos(hWnd, nullptr, 0, 0, 0, 0, 1);
+			}
 		}
 	}
 
-	return CallNextHookEx(nullptr, nCode, wParam, lParam);
+	return CallNextHookEx(NULL, nCode, wParam, lParam);
 }
 
 DWORD WINAPI dwThread(LPVOID lpParam) {
+	// Fuck off if you aren't explorer.exe
+	wchar_t fileName[MAX_PATH];
+	GetModuleFileNameW(NULL, fileName, MAX_PATH);
+	if (wcsstr(fileName, L"xplorer.") == NULL) {
+		FreeLibraryAndExitThread(LoadLibraryW(L"FixWin81Taskbar.Module.dll"), 0);
+	}
+
 	// initially hide the start button
 	auto hWnd = FindWindowW(L"Shell_SecondaryTrayWnd", nullptr);
 	hWnd = FindWindowExW(hWnd, nullptr, L"Start", nullptr);
@@ -53,13 +60,6 @@ DWORD WINAPI dwThread(LPVOID lpParam) {
 
 BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpvReserved) {
 	if (fdwReason == DLL_PROCESS_ATTACH) {
-		// Fuck off if you aren't explorer.exe
-		std::vector<wchar_t> fileNameVec(MAX_PATH);
-		GetModuleFileNameW(NULL, &fileNameVec[0], MAX_PATH);
-		std::wstring fileName(fileNameVec.begin(), fileNameVec.end());
-		if (fileName.find(L"Explorer") == std::wstring::npos && fileName.find(L"explorer") == std::wstring::npos)
-			return FALSE;
-
 		auto thread = CreateThread(NULL, NULL, dwThread, hInstDLL, NULL, NULL);
 		CloseHandle(thread);
 	}
