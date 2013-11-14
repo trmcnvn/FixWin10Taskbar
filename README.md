@@ -1,8 +1,6 @@
 # FixWin81Taskbar
 
-In Windows 8 when you had a fullscreen borderless application (game) open on your primary monitor you could click the extended taskbar on your secondary monitor and it would bring the primary monitors taskbar on top. This is no longer the case in Windows 8.1 and it has frustrated me to no end.
-
-FixWin81Taskbar restores that functionality :+1:!
+Removes the start menu on the extended taskbar, as well as returns the functionality of setting the primary taskbar to the foreground when the extended taskbar is clicked.
 
 # Usage
 
