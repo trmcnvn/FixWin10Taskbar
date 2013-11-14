@@ -6,17 +6,19 @@
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 
-void Inject(const std::wstring& className, const std::wstring& source) {
+void Inject(const std::wstring& source) {
+	auto hWnd = FindWindowW(L"Shell_SecondaryTrayWnd", nullptr);
+
 	DWORD procId;
-	GetWindowThreadProcessId(FindWindowW(className.c_str(), NULL), &procId);
+	GetWindowThreadProcessId(hWnd, &procId);
 	auto procHandle = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_CREATE_THREAD |
 		PROCESS_VM_WRITE | PROCESS_VM_READ | PROCESS_VM_OPERATION, FALSE, procId);
 
-	auto addr = VirtualAllocEx(procHandle, NULL, source.size() * 2, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
-	auto ret = WriteProcessMemory(procHandle, addr, source.data(), source.size() * 2, NULL);
+	auto addr = VirtualAllocEx(procHandle, nullptr, source.size() * 2, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+	auto ret = WriteProcessMemory(procHandle, addr, source.data(), source.size() * 2, nullptr);
 
 	auto libaddr = GetProcAddress(GetModuleHandleW(L"kernel32.dll"), "LoadLibraryW");
-	auto thread = CreateRemoteThread(procHandle, NULL, NULL, reinterpret_cast<LPTHREAD_START_ROUTINE>(libaddr), addr, NULL, NULL);
+	auto thread = CreateRemoteThread(procHandle, NULL, NULL, reinterpret_cast<LPTHREAD_START_ROUTINE>(libaddr), addr, NULL, nullptr);
 
 	WaitForSingleObject(thread, INFINITE);
 	VirtualFreeEx(procHandle, addr, source.size() * 2, MEM_RELEASE);
@@ -42,5 +44,5 @@ int main(int argc, char** argv) {
 	appPath.append(L"\\FixWin81Taskbar.Module.dll");
 
 	// Inject into explorer.exe
-	Inject(L"Shell_SecondaryTrayWnd", appPath);
+	Inject(appPath);
 }
