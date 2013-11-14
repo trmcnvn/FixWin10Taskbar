@@ -6,27 +6,6 @@
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 
-void Inject(const std::wstring& source) {
-	auto hWnd = FindWindowW(L"Shell_SecondaryTrayWnd", nullptr);
-
-	DWORD procId;
-	GetWindowThreadProcessId(hWnd, &procId);
-	auto procHandle = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_CREATE_THREAD |
-		PROCESS_VM_WRITE | PROCESS_VM_READ | PROCESS_VM_OPERATION, FALSE, procId);
-
-	auto addr = VirtualAllocEx(procHandle, nullptr, source.size() * 2, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
-	auto ret = WriteProcessMemory(procHandle, addr, source.data(), source.size() * 2, nullptr);
-
-	auto libaddr = GetProcAddress(GetModuleHandleW(L"kernel32.dll"), "LoadLibraryW");
-	auto thread = CreateRemoteThread(procHandle, NULL, NULL, reinterpret_cast<LPTHREAD_START_ROUTINE>(libaddr), addr, NULL, nullptr);
-
-	WaitForSingleObject(thread, INFINITE);
-	VirtualFreeEx(procHandle, addr, source.size() * 2, MEM_RELEASE);
-	CloseHandle(thread);
-	CloseHandle(procHandle);
-}
-
-
 int main(int argc, char** argv) {
 	// Add this program to startup
 	HKEY regKey;
@@ -43,6 +22,21 @@ int main(int argc, char** argv) {
 	appPath = appPath.substr(0, appPath.find_last_of('\\'));
 	appPath.append(L"\\FixWin81Taskbar.Module.dll");
 
-	// Inject into explorer.exe
-	Inject(appPath);
+	// Hide the console window
+	ShowWindow(GetForegroundWindow(), SW_HIDE);
+
+	// Hide start menu button
+	auto hWnd = FindWindowW(L"Shell_SecondaryTrayWnd", nullptr);
+	ShowWindow(FindWindowExW(hWnd, nullptr, L"Start", nullptr), SW_HIDE);
+
+	// Some hooks
+	auto dllHandle = LoadLibraryW(L"FixWin81Taskbar.Module.dll");
+	auto threadId = GetWindowThreadProcessId(hWnd, nullptr);
+	auto mouseProc = GetProcAddress(dllHandle, "MouseProc");
+	auto redrawProc = GetProcAddress(dllHandle, "RedrawProc");
+
+	SetWindowsHookExW(WH_MOUSE, reinterpret_cast<HOOKPROC>(mouseProc), dllHandle, threadId);
+	SetWindowsHookExW(WH_CALLWNDPROC, reinterpret_cast<HOOKPROC>(redrawProc), dllHandle, threadId);
+
+	Sleep(INFINITE);
 }
