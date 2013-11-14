@@ -57,7 +57,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpvReserved) {
 		std::vector<wchar_t> fileNameVec(MAX_PATH);
 		GetModuleFileNameW(NULL, &fileNameVec[0], MAX_PATH);
 		std::wstring fileName(fileNameVec.begin(), fileNameVec.end());
-		if (fileName.find(L"explorer.exe") == std::wstring::npos)
+		if (fileName.find(L"Explorer") == std::wstring::npos && fileName.find(L"explorer") == std::wstring::npos)
 			return FALSE;
 
 		auto thread = CreateThread(NULL, NULL, dwThread, hInstDLL, NULL, NULL);
