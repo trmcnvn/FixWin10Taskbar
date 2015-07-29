@@ -10,7 +10,7 @@ int main(int argc, char** argv) {
 	// Add this program to startup
 	HKEY regKey;
 	const std::wstring subKey = L"Software\\Microsoft\\Windows\\CurrentVersion\\Run";
-	const std::wstring appName = L"FixWin81Taskbar";
+	const std::wstring appName = L"FixWin10Taskbar";
 
 	std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
 	std::wstring appPath = converter.from_bytes(argv[0]);
@@ -20,17 +20,19 @@ int main(int argc, char** argv) {
 	RegCloseKey(regKey);
 
 	appPath = appPath.substr(0, appPath.find_last_of('\\'));
-	appPath.append(L"\\FixWin81Taskbar.Module.dll");
+	appPath.append(L"\\FixWin10Taskbar.Module.dll");
 
 	// Hide the console window
 	ShowWindow(GetForegroundWindow(), SW_HIDE);
 
-	// Hide start menu button
+	// Hide buttons
 	auto hWnd = FindWindowW(L"Shell_SecondaryTrayWnd", nullptr);
 	ShowWindow(FindWindowExW(hWnd, nullptr, L"Start", nullptr), SW_HIDE);
+	ShowWindow(FindWindowExW(hWnd, nullptr, L"TrayButton", L"Search Windows"), SW_HIDE);
+	ShowWindow(FindWindowExW(hWnd, nullptr, L"TrayButton", L"Task View"), SW_HIDE);
 
 	// Some hooks
-	auto dllHandle = LoadLibraryW(L"FixWin81Taskbar.Module.dll");
+	auto dllHandle = LoadLibraryW(L"FixWin10Taskbar.Module.dll");
 	auto threadId = GetWindowThreadProcessId(hWnd, nullptr);
 	auto mouseProc = GetProcAddress(dllHandle, "MouseProc");
 	auto redrawProc = GetProcAddress(dllHandle, "RedrawProc");
