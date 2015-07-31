@@ -2,6 +2,8 @@
 
 Removes the start menu, search, and task view buttons on the extended taskbar, as well as returns the functionality of setting the primary taskbar to the foreground when the extended taskbar is clicked.
 
+Note: This is developed for setups with dual monitors, if you have more it could cause unexpected results :/!
+
 # Windows 8/8.1
 
 Check the releases page for a Windows 8/8.1 Compatible version
